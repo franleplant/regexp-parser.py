@@ -39,6 +39,8 @@ def parse(tokens):
         'tree': ('Re', [])
     }
 
+    tree = []
+
     def get():
         i = data['i']
         print "-Get %s" % (i)
@@ -54,34 +56,45 @@ def parse(tokens):
 
     def Ops():
         token = get()
-        print "Ops", i, token
+        print "Ops", token
 
         if token == None:
             raise Expection()
 
         (cat, lexeme) = token
 
-        if cat == "EOF":
-            return True
-
         # First of Ops -> |Re
         if cat == "|":
+            tree.append(('|', 'Re'))
+            print "=> |, Re"
             next()
             return Re()
         # First of Ops -> *
         elif cat == "*":
+            tree.append(('*'))
+            print "=> *"
             next()
             return True
-        # First of Ops -> |
-        elif cat == "|":
+        # First of Ops -> +
+        elif cat == "+":
+            tree.append(('+'))
+            print "=> +"
             next()
             return True
         # First of Ops -> Re
         elif cat == "Lit" or cat == "(":
+            tree.append(('Re',))
+            print "=> Re"
             return Re()
 
-        # Follow of Ops -> Lambda
+        # Follow of Ops
         elif cat == ")":
+            tree.append(('Lamda',))
+            print "=> Lamda"
+            return True
+
+        # Follow of Ops
+        elif cat == "EOF":
             return True
         else:
             return False
@@ -96,27 +109,31 @@ def parse(tokens):
 
         (cat, lexeme) = token
 
-        # if cat == "EOF":
-            # return True
+        if cat == "EOF":
+            return True
 
         # First of Re -> rOps
         if cat == "Lit":
+            tree.append(('Lit', 'Ops'))
+            print "=> r, Ops"
             next()
             return Ops()
-        # First of Re -> (Re)
+        # First of Re -> (Re)Ops
         elif cat == "(":
+            tree.append(('(', 'Re', ')', 'Ops'))
+            print "=> (, Re, ), Ops"
             next()
             if Re():
                 (cat, lexeme) = get()
                 if cat == ")":
                     next()
-                    return True
+                    return Ops()
 
         return False
 
 
 
-    return Re()
+    return (Re(), tree)
 
 cases = [
     "a",
@@ -128,6 +145,9 @@ cases = [
 
 for (i, c) in enumerate(cases):
     print "%s: %s \n" % (i, c)
-    print parse(lex(c))
+    (res, tree) = parse(lex(c))
+    print "Is Accepted: %s" % res
+    for n in tree:
+        print n
     print "\n"
 
